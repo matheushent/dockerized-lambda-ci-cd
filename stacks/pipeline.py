@@ -57,7 +57,7 @@ class Pipeline(core.Stack):
                             action_name="CodeDeployExample",
                             admin_permissions=True,
                             stack_name=props["stack_name"],
-                            template_path=source_output.at_path("template.yml"),
+                            template_path=source_output.at_path("cdk.out/example-pipeline-lambda.template.json"),
                             replace_on_failure=True
                         )
                     ]
