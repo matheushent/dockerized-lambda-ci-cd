@@ -1,0 +1,862 @@
+{
+  "Resources": {
+    "ExampleFunctionsServiceRoleAF28444D": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleFunctions/ServiceRole/Resource"
+      }
+    },
+    "ExampleFunctionsEC74BD44": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "ImageUri": {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Fn::Select": [
+                    4,
+                    {
+                      "Fn::Split": [
+                        ":",
+                        {
+                          "Fn::ImportValue": "example-pipeline-base:ExportsOutputFnGetAttECRF8362BFEArn3D77E137"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                ".dkr.ecr.",
+                {
+                  "Fn::Select": [
+                    3,
+                    {
+                      "Fn::Split": [
+                        ":",
+                        {
+                          "Fn::ImportValue": "example-pipeline-base:ExportsOutputFnGetAttECRF8362BFEArn3D77E137"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                ".",
+                {
+                  "Ref": "AWS::URLSuffix"
+                },
+                "/",
+                {
+                  "Fn::ImportValue": "example-pipeline-base:ExportsOutputRefECRF8362BFED0536A2F"
+                },
+                ":latest"
+              ]
+            ]
+          }
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "ExampleFunctionsServiceRoleAF28444D",
+            "Arn"
+          ]
+        },
+        "FunctionName": "example-function",
+        "PackageType": "Image",
+        "Timeout": 120
+      },
+      "DependsOn": [
+        "ExampleFunctionsServiceRoleAF28444D"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleFunctions/Resource"
+      }
+    },
+    "ExampleFunctionsEventInvokeConfig9E2C0AC1": {
+      "Type": "AWS::Lambda::EventInvokeConfig",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "ExampleFunctionsEC74BD44"
+        },
+        "Qualifier": "$LATEST",
+        "MaximumRetryAttempts": 0
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleFunctions/EventInvokeConfig/Resource"
+      }
+    },
+    "ExampleAPI1F5011EB": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": "example-api"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Resource"
+      }
+    },
+    "ExampleAPICloudWatchRoleE11D79E5": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "apigateway.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/CloudWatchRole/Resource"
+      }
+    },
+    "ExampleAPIAccountAA7A9DDA": {
+      "Type": "AWS::ApiGateway::Account",
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::GetAtt": [
+            "ExampleAPICloudWatchRoleE11D79E5",
+            "Arn"
+          ]
+        }
+      },
+      "DependsOn": [
+        "ExampleAPI1F5011EB"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Account"
+      }
+    },
+    "ExampleAPIDeployment6CF7199Efc44334bd54b3e794d096f74124f4e68": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "Description": "Automatically created by the RestApi construct"
+      },
+      "DependsOn": [
+        "ExampleAPIproxyANY8AB8EB40",
+        "ExampleAPIproxyOPTIONSE73D3E7B",
+        "ExampleAPIproxyA3D45F36",
+        "ExampleAPIANY83C23168",
+        "ExampleAPIOPTIONSBAC05C1D"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Deployment/Resource"
+      }
+    },
+    "ExampleAPIDeploymentStagev1F82F7146": {
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "DeploymentId": {
+          "Ref": "ExampleAPIDeployment6CF7199Efc44334bd54b3e794d096f74124f4e68"
+        },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": true,
+            "HttpMethod": "*",
+            "ResourcePath": "/*"
+          }
+        ],
+        "StageName": "v1",
+        "TracingEnabled": true
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/DeploymentStage.v1/Resource"
+      }
+    },
+    "ExampleAPIproxyA3D45F36": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Properties": {
+        "ParentId": {
+          "Fn::GetAtt": [
+            "ExampleAPI1F5011EB",
+            "RootResourceId"
+          ]
+        },
+        "PathPart": "{proxy+}",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Default/{proxy+}/Resource"
+      }
+    },
+    "ExampleAPIproxyANYApiPermissionexamplepipelinelambdaExampleAPI8F067CF2ANYproxy4456725E": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ExampleFunctionsEC74BD44",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ExampleAPI1F5011EB"
+              },
+              "/",
+              {
+                "Ref": "ExampleAPIDeploymentStagev1F82F7146"
+              },
+              "/*/*"
+            ]
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Default/{proxy+}/ANY/ApiPermission.examplepipelinelambdaExampleAPI8F067CF2.ANY..{proxy+}"
+      }
+    },
+    "ExampleAPIproxyANYApiPermissionTestexamplepipelinelambdaExampleAPI8F067CF2ANYproxy133CE73B": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "ExampleFunctionsEC74BD44",
+            "Arn"
+          ]
+        },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": {
+          "Fn::Join": [
+            "",
+            [
+              "arn:",
+              {
+                "Ref": "AWS::Partition"
+              },
+              ":execute-api:",
+              {
+                "Ref": "AWS::Region"
+              },
+              ":",
+              {
+                "Ref": "AWS::AccountId"
+              },
+              ":",
+              {
+                "Ref": "ExampleAPI1F5011EB"
+              },
+              "/test-invoke-stage/*/*"
+            ]
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Default/{proxy+}/ANY/ApiPermission.Test.examplepipelinelambdaExampleAPI8F067CF2.ANY..{proxy+}"
+      }
+    },
+    "ExampleAPIproxyANY8AB8EB40": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "ANY",
+        "ResourceId": {
+          "Ref": "ExampleAPIproxyA3D45F36"
+        },
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationHttpMethod": "POST",
+          "Type": "AWS_PROXY",
+          "Uri": {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":apigateway:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":lambda:path/2015-03-31/functions/",
+                {
+                  "Fn::GetAtt": [
+                    "ExampleFunctionsEC74BD44",
+                    "Arn"
+                  ]
+                },
+                "/invocations"
+              ]
+            ]
+          }
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Default/{proxy+}/ANY/Resource"
+      }
+    },
+    "ExampleAPIproxyOPTIONSE73D3E7B": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "OPTIONS",
+        "ResourceId": {
+          "Ref": "ExampleAPIproxyA3D45F36"
+        },
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Credentials": "'false'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,PUT,POST,OPTIONS'"
+              },
+              "StatusCode": "200"
+            }
+          ],
+          "PassthroughBehavior": "WHEN_NO_MATCH",
+          "RequestTemplates": {
+            "application/json": "{\"statusCode\":200}"
+          },
+          "Type": "MOCK"
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Credentials": true,
+              "method.response.header.Access-Control-Allow-Origin": true
+            },
+            "StatusCode": "200"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Default/{proxy+}/OPTIONS/Resource"
+      }
+    },
+    "ExampleAPIANY83C23168": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "ANY",
+        "ResourceId": {
+          "Fn::GetAtt": [
+            "ExampleAPI1F5011EB",
+            "RootResourceId"
+          ]
+        },
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "MOCK"
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Default/ANY/Resource"
+      }
+    },
+    "ExampleAPIOPTIONSBAC05C1D": {
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "HttpMethod": "OPTIONS",
+        "ResourceId": {
+          "Fn::GetAtt": [
+            "ExampleAPI1F5011EB",
+            "RootResourceId"
+          ]
+        },
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "IntegrationResponses": [
+            {
+              "ResponseParameters": {
+                "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                "method.response.header.Access-Control-Allow-Origin": "'*'",
+                "method.response.header.Access-Control-Allow-Credentials": "'false'",
+                "method.response.header.Access-Control-Allow-Methods": "'GET,PUT,POST,OPTIONS'"
+              },
+              "StatusCode": "200"
+            }
+          ],
+          "PassthroughBehavior": "WHEN_NO_MATCH",
+          "RequestTemplates": {
+            "application/json": "{\"statusCode\":200}"
+          },
+          "Type": "MOCK"
+        },
+        "MethodResponses": [
+          {
+            "ResponseParameters": {
+              "method.response.header.Access-Control-Allow-Headers": true,
+              "method.response.header.Access-Control-Allow-Methods": true,
+              "method.response.header.Access-Control-Allow-Credentials": true,
+              "method.response.header.Access-Control-Allow-Origin": true
+            },
+            "StatusCode": "200"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/ExampleAPI/Default/OPTIONS/Resource"
+      }
+    },
+    "UnauthorizedResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "UNAUTHORIZED",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": \"Authorizer failed to authenticate user\"}"
+        },
+        "StatusCode": "401"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/UnauthorizedResponse"
+      }
+    },
+    "MissingAuthenticationTokenResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "MISSING_AUTHENTICATION_TOKEN",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": $context.error.messageString}"
+        },
+        "StatusCode": "403"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/MissingAuthenticationTokenResponse"
+      }
+    },
+    "IntegrationTimeoutResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "INTEGRATION_TIMEOUT",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": \"Apigateway timed out\"}"
+        },
+        "StatusCode": "504"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/IntegrationTimeoutResponse"
+      }
+    },
+    "InvalidApiKeyResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "INVALID_API_KEY",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": \"Api key provided not authorized\"}"
+        },
+        "StatusCode": "403"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/InvalidApiKeyResponse"
+      }
+    },
+    "Default5XXResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "DEFAULT_5XX",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": \"Server side error\"}"
+        },
+        "StatusCode": "500"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/Default5XXResponse"
+      }
+    },
+    "BadResquestBodyResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "BAD_REQUEST_BODY",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": \"Missing body key-value pair\"}"
+        },
+        "StatusCode": "400"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/BadResquestBodyResponse"
+      }
+    },
+    "BadResquestParametersResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "BAD_REQUEST_PARAMETERS",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": \"Missing query string parameter key-value pair\"}"
+        },
+        "StatusCode": "400"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/BadResquestParametersResponse"
+      }
+    },
+    "AccessDeniedResponse": {
+      "Type": "AWS::ApiGateway::GatewayResponse",
+      "Properties": {
+        "ResponseType": "ACCESS_DENIED",
+        "RestApiId": {
+          "Ref": "ExampleAPI1F5011EB"
+        },
+        "ResponseParameters": {
+          "gatewayresponse.header.Access-Control-Allow-Origin": "'*'"
+        },
+        "ResponseTemplates": {
+          "application/json": "{\"Message\": \"Authorization denied by AWS Cognito\"}"
+        },
+        "StatusCode": "401"
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/AccessDeniedResponse"
+      }
+    },
+    "CDKMetadata": {
+      "Type": "AWS::CDK::Metadata",
+      "Properties": {
+        "Analytics": "v2:deflate64:H4sIAAAAAAAAE21Qy07DMBD8lt5dV1WFEDdKeYgDIgpfYJxtuiT2Wva6JbLy79gJLT1w2vHMemZ31/LuRq4X9+oUlrrpVkmTB5k+WOlO7Pb2PbKLLHZkA/uouXA1BIpeQ8FZaJCR7CiKReqV+WyUTM/R6kKXngt+OoLlV3ukDvK/PbZF/ZeswBsMYfJFZWSqqZ/ySs1RDlvFcFJDViDw1uHvYGe41ZqiZfEIrqfB5IjCXr3yhu3kOIPzTg8qgKg8fQ/XW17wG/CBmkL9oZd5ktzj8pVgHEdRDVm0q428lZvFV0Bc+jwMGpD1XH8AgCsp0ncBAAA="
+      },
+      "Metadata": {
+        "aws:cdk:path": "example-pipeline-lambda/CDKMetadata/Default"
+      },
+      "Condition": "CDKMetadataAvailable"
+    }
+  },
+  "Outputs": {
+    "ExampleAPIEndpointE7C2DF6D": {
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            {
+              "Ref": "ExampleAPI1F5011EB"
+            },
+            ".execute-api.",
+            {
+              "Ref": "AWS::Region"
+            },
+            ".",
+            {
+              "Ref": "AWS::URLSuffix"
+            },
+            "/",
+            {
+              "Ref": "ExampleAPIDeploymentStagev1F82F7146"
+            },
+            "/"
+          ]
+        ]
+      }
+    }
+  },
+  "Conditions": {
+    "CDKMetadataAvailable": {
+      "Fn::Or": [
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "af-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-northeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-northeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-southeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-southeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ca-central-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "cn-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "cn-northwest-1"
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-central-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-3"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "me-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "sa-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-east-2"
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-west-2"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
