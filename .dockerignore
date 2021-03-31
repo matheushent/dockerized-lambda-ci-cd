@@ -1,0 +1,11 @@
+.git
+.github
+.ipynb_checkpoints
+
+.env
+.venv
+env
+venv
+
+.vscode
+cdk.out
