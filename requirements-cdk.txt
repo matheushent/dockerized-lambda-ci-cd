@@ -1,0 +1,14 @@
+aws_cdk.core==1.95.1
+aws_cdk.aws_s3==1.95.1
+aws_cdk.aws_iam==1.95.1
+aws_cdk.aws_ssm==1.95.1
+aws_cdk.aws_events==1.95.1
+aws_cdk.aws_lambda==1.95.1
+aws_cdk.aws_route53==1.95.1
+aws_cdk.aws_codebuild==1.95.1
+aws_cdk.aws_apigateway==1.95.1
+aws_cdk.aws_codepipeline==1.95.1
+aws_cdk.aws_events_targets==1.95.1
+aws_cdk.aws_route53_targets==1.95.1
+aws_cdk.aws_certificatemanager==1.95.1
+aws_cdk.aws_codepipeline_actions==1.95.1
